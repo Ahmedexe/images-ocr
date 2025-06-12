@@ -1,4 +1,4 @@
-import { App, Plugin, Notice, Modal, TextComponent, ButtonComponent, FileSystemAdapter, PluginSettingTab, Setting, ItemView, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, Notice, Modal, TextComponent, ButtonComponent, FileSystemAdapter, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import * as Tesseract from 'tesseract.js';
 import * as fs from 'fs';
 
@@ -96,8 +96,9 @@ export default class OCRPlugin extends Plugin {
       name: 'Set OCR Language Code',
       callback: () => {
         // prompt the user a modal to enter the lang code
-        new SetLanguageModal(this.app, (langCode) => {
+        new SetLanguageModal(this.app, async (langCode) => {
           this.settings.ocrLang = langCode;
+          await this.saveSettings();
           new Notice(`OCR language set to: ${langCode}`);
         }, this).open();
       }
@@ -151,8 +152,37 @@ export default class OCRPlugin extends Plugin {
       OCR_VIEW_TYPE,
       (leaf) => new OcrSidebarView(leaf, "", "", "")
     );
-    
 
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (file instanceof TFile && file.extension.match(/png|jpe?g/i)) {
+          menu.addItem(item => {
+            item.setTitle("Run OCR and show result in sidebar")
+                .setIcon("eye") // or use another suitable icon
+                .onClick(async () => {
+                  const adapter = this.app.vault.adapter;
+                  if (!(adapter instanceof FileSystemAdapter)) {
+                    return;
+                  }
+
+                  const fullPath = adapter.getFullPath(file.path);
+                  try {
+                    const buffer = fs.readFileSync(fullPath);
+                    const result = await Tesseract.recognize(buffer, this.settings.ocrLang);
+                    const text = result.data.text
+
+                    await this.showOcrResultInSidebar(text, fullPath, this.settings.ocrLang); // show results in sidebar
+                  } catch (err) {
+                    console.log(err);
+                  }
+                  
+                });
+          });
+        }
+      })
+    );
+    
+  
   }
   // show OCR in sidebar
   async showOcrResultInSidebar(resultText: string, path: string, language: string) {
@@ -212,6 +242,8 @@ class OcrSidebarView extends ItemView {
 
     const title = container.createEl('h3', { text: `OCR Result from: ${this.title}` });
     title.style.marginBottom = '0.5rem';
+    title.style.whiteSpace = 'pre-wrap';
+    title.style.wordBreak = 'break-word';
 
     const pre = container.createEl("pre", { text: this.content });
     this.containerEl.style.overflow = 'auto';
