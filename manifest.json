@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "aaa",
+	"id": "obsidian-ocr",
+	"name": "Multilingual OCR for Obsidian",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Multilingual extraction of texts from images",
+	"author": "Ahmed Alzuhair",
+	"repo": "Ahmedexe/obsidian-images-ocr",
 	"isDesktopOnly": false
 }
