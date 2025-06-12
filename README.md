@@ -2,8 +2,6 @@
 
 **Multilingual OCR** is a handy plugin that extract text from images in any langauge.
 
----
-
 ## Features
 
 -   You can apply OCR:
@@ -18,22 +16,16 @@
 ![demo](images/demo.gif)
 ![file explorer demo](images/fileExplorerDemo.png)
 
----
-
 ## Supported file extensions
 
 -   `png`
 -   `jpg`
 -   `jpeg`
 
----
-
 ## Limitations
 
 -   This plugin uses [Tesseract.js](https://tesseract.projectnaptha.com/), which is not perfect and hence may result in unexpected outputs for some images.
 -   The file extensions are limited (could be extended in the future...)
-
----
 
 ## Installation
 
