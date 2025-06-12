@@ -220,7 +220,7 @@ class OcrSidebarView extends ItemView {
     pre.style.wordBreak = 'break-word';
     pre.style.overflowY = 'auto';
     pre.style.maxHeight = '100%';
-    pre.style.padding = '8px';
+    pre.style.padding = '0.5em'; 
     pre.style.userSelect = 'text';
     pre.style.cursor = 'text';
 
