@@ -29,4 +29,4 @@
 
 ## Installation
 
-This plugin could be found on the (Obsidian community plugin repo)[https://obsidian.md/plugins].
+This plugin could be found on the [Obsidian community plugin repo](https://obsidian.md/plugins).
