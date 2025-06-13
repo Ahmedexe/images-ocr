@@ -1,0 +1,34 @@
+/* For the container element */
+.ocr-container {
+    overflow: auto;
+}
+  
+  /* For the <pre> element */
+  .ocr-output {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto;
+    max-height: 100%;
+    padding: 0.5em;
+    user-select: text;
+    cursor: text;
+}
+
+/* for arabic text */
+.isArabic {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Style for the title element */
+.ocr-title {
+    margin-bottom: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.modal-input {
+    width: 100%;
+    margin-bottom: 2vh;
+}
+  

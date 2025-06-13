@@ -241,25 +241,16 @@ class OcrSidebarView extends ItemView {
     const isArabic = this.lang === 'ara';
 
     const title = container.createEl('h3', { text: `OCR Result from: ${this.title}` });
-    title.style.marginBottom = '0.5rem';
-    title.style.whiteSpace = 'pre-wrap';
-    title.style.wordBreak = 'break-word';
+    title.classList.add(".ocr-title")
 
     const pre = container.createEl("pre", { text: this.content });
-    this.containerEl.style.overflow = 'auto';
+    this.containerEl.classList.add("ocr-container");
     
-    pre.style.whiteSpace = 'pre-wrap';
-    pre.style.wordBreak = 'break-word';
-    pre.style.overflowY = 'auto';
-    pre.style.maxHeight = '100%';
-    pre.style.padding = '0.5em'; 
-    pre.style.userSelect = 'text';
-    pre.style.cursor = 'text';
+    pre.classList.add("ocr-output");
 
     // make the text direction to right if the language is arabic
     if (isArabic) {
-      pre.style.direction = 'rtl';
-      pre.style.textAlign = 'right';
+      pre.classList.add("isArabic")
     }
   }
 
@@ -283,8 +274,7 @@ class ImagePathInputModal extends Modal {
     contentEl.createEl('h2', { text: 'Enter relative image path (e.g., attachments/image.png)' });
 
     const input = new TextComponent(contentEl);
-    input.inputEl.style.width = '100%';
-    input.inputEl.style.marginBottom = '2vh'; // or '5vw'
+    input.inputEl.classList.add("modal-input")
 
     // set submit button
     new ButtonComponent(contentEl)
@@ -324,8 +314,7 @@ class SetLanguageModal extends Modal {
 
     const input = new TextComponent(contentEl);
     input.setValue(this.plugin.settings.ocrLang);
-    input.inputEl.style.width = '100%';
-    input.inputEl.style.marginBottom = '2vh'; // or '5vw'
+    input.inputEl.classList.add("modal-input")
 
 
 
