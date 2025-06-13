@@ -1,6 +1,6 @@
-import { App, Plugin, Notice, Modal, TextComponent, ButtonComponent, FileSystemAdapter, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { App, Plugin, Notice, Modal, TextComponent, ButtonComponent, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import * as Tesseract from 'tesseract.js';
-import * as fs from 'fs';
+
 
 const OCR_VIEW_TYPE = 'ocr-sidebar-view';
 
@@ -11,7 +11,7 @@ interface OCRPluginSettings {
 
 // default config
 const DEFAULT_SETTINGS: OCRPluginSettings = {
-  defaultImageFolder: 'attachments/',
+  defaultImageFolder: 'Attachments/',
   ocrLang: 'eng'
 };
 
@@ -49,37 +49,40 @@ export default class OCRPlugin extends Plugin {
           new Notice("No image found in note.");
           return;
         }
-    
-        const adapter = this.app.vault.adapter;
-        if (!(adapter instanceof FileSystemAdapter)) {
-          new Notice("Unsupported vault adapter.");
-          return;
-        }
+
         const baseFolder = this.settings.defaultImageFolder.replace(/^\/|\/$/g, ''); // remove leading/trailing slashes
         const fullRelativePath = `${baseFolder}/${imageFile}`;
 
-        const fullPath = adapter.getFullPath(fullRelativePath);
-        const buffer = fs.readFileSync(fullPath);
+        const image = this.app.vault.getAbstractFileByPath(fullRelativePath);
+        console.log(fullRelativePath)
 
-        if (!fs.existsSync(fullPath)) {
-          new Notice("File not found: " + fullRelativePath); 
+        if (!(image instanceof TFile)) {
+          new Notice("Image file not found in vault.");
           return;
         }
-        if (!fs.statSync(fullPath).isFile()) {
-          new Notice("Path is a directory, not a file.");
-          return;
-        }
+
         
-    
-        new Notice(`Running OCR on ${imageFile}...`);
         try {
-          const result = await Tesseract.recognize(buffer, this.settings.ocrLang); // use Tesseract
+
+          const buffer = await this.app.vault.readBinary(image); // <-- returns Uint8Array
+          // Convert ArrayBuffer to Blob
+          const blob = new Blob([buffer]);
+  
+          // Create an object URL that Tesseract can consume
+          const imageUrl = URL.createObjectURL(blob);
+                  
+          
+      
+          new Notice(`Running OCR on ${imageFile}...`);
+
+          const result = await Tesseract.recognize(imageUrl, this.settings.ocrLang); // use Tesseract
           const text = result.data.text;
     
           // Copy to clipboard using web API
           await navigator.clipboard.writeText(text);
           new Notice("OCR result copied to clipboard :)");
           await this.showOcrResultInSidebar(text, imageFile, this.settings.ocrLang); // show the result in the sidebar
+          new Notice("OCR result is shown in the side bar :)");
         } catch (err) {
           console.error("OCR failed:", err);
           new Notice("OCR failed.");
@@ -111,34 +114,32 @@ export default class OCRPlugin extends Plugin {
       callback: () => {
         // prompt the user a modal to enter the image path
         new ImagePathInputModal(this.app, async (userPath) => {
-          const adapter = this.app.vault.adapter;
-          if (!(adapter instanceof FileSystemAdapter)) {
-            new Notice("Unsupported adapter.");
+        const image = this.app.vault.getAbstractFileByPath(userPath);
+
+          if (!(image instanceof TFile)) {
+            new Notice("Image file not found in vault.");
             return;
           }
-    
-          const fullPath = adapter.getFullPath(userPath);
-    
-          // Validate the path
-          if (!fs.existsSync(fullPath)) {
-            new Notice("File does not exist.");
-            return;
-          }
-          if (!fs.statSync(fullPath).isFile()) {
-            new Notice("Path is not a file.");
-            return;
-          }
+
+        
     
           try {
+            const buffer = await this.app.vault.readBinary(image); // <-- returns Uint8Array
+            // Convert ArrayBuffer to Blob
+            const blob = new Blob([buffer]);
+
+            // Create an object URL that Tesseract can consume
+            const imageUrl = URL.createObjectURL(blob);
             new Notice(`Running OCR (${this.settings.ocrLang})...`);
-            const buffer = fs.readFileSync(fullPath);
-            const result = await Tesseract.recognize(buffer, this.settings.ocrLang);
+            
+            const result = await Tesseract.recognize(imageUrl, this.settings.ocrLang);
             const text = result.data.text
 
             // Copy to clipboard
             await navigator.clipboard.writeText(text);
             new Notice("OCR result copied to clipboard :)");
-            await this.showOcrResultInSidebar(text, fullPath, this.settings.ocrLang); // show results in sidebar
+            await this.showOcrResultInSidebar(text, imageUrl, this.settings.ocrLang); // show results in sidebar
+            new Notice("OCR result is shown in the side bar :)");
           } catch (err) {
             console.error("OCR failed:", err);
             new Notice("OCR failed.");
@@ -160,18 +161,30 @@ export default class OCRPlugin extends Plugin {
             item.setTitle("Run OCR and show result in sidebar")
                 .setIcon("eye") // or use another suitable icon
                 .onClick(async () => {
-                  const adapter = this.app.vault.adapter;
-                  if (!(adapter instanceof FileSystemAdapter)) {
+                  const image = this.app.vault.getAbstractFileByPath(file.path);
+
+                  if (!(image instanceof TFile)) {
+                    new Notice("Image file not found in vault.");
                     return;
                   }
 
-                  const fullPath = adapter.getFullPath(file.path);
+                  
                   try {
-                    const buffer = fs.readFileSync(fullPath);
-                    const result = await Tesseract.recognize(buffer, this.settings.ocrLang);
+
+                    const buffer = await this.app.vault.readBinary(image); // <-- returns Uint8Array
+                    // Convert ArrayBuffer to Blob
+                    const blob = new Blob([buffer]);
+
+                    // Create an object URL that Tesseract can consume
+                    const imageUrl = URL.createObjectURL(blob);
+                    new Notice(`Running OCR (${this.settings.ocrLang})...`);
+                    const result = await Tesseract.recognize(imageUrl, this.settings.ocrLang);
                     const text = result.data.text
 
-                    await this.showOcrResultInSidebar(text, fullPath, this.settings.ocrLang); // show results in sidebar
+                    await navigator.clipboard.writeText(text);
+                    new Notice("OCR result copied to clipboard :)");
+                    await this.showOcrResultInSidebar(text, file.path, this.settings.ocrLang); // show results in sidebar
+                    new Notice("OCR result is shown in the side bar :)");
                   } catch (err) {
                     console.log(err);
                   }
@@ -271,7 +284,7 @@ class ImagePathInputModal extends Modal {
   // construct the view
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl('h2', { text: 'Enter relative image path (e.g., attachments/image.png)' });
+    contentEl.createEl('h2', { text: 'Enter relative image path (e.g., Attachments/image.png)' });
 
     const input = new TextComponent(contentEl);
     input.inputEl.classList.add("modal-input")
@@ -351,9 +364,9 @@ class OCRSettingTab extends PluginSettingTab {
     // image default path setting
     new Setting(containerEl)
       .setName('Default image folder path')
-      .setDesc('Relative to vault (e.g., attachments/)')
+      .setDesc('Relative to vault (e.g., Attachments/)')
       .addText(text => text
-        .setPlaceholder('attachments/')
+        .setPlaceholder('Attachments/')
         .setValue(this.plugin.settings.defaultImageFolder)
         .onChange(async (value) => {
           this.plugin.settings.defaultImageFolder = value.trim();
